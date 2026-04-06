@@ -50,7 +50,7 @@ def employee_dashboard(request):
     return render(request, 'employee_dashboard.html', {'employee': employee})
 
 
-# 🚪 LOGOUT (FINAL FIX ✅ NO CSRF ISSUE)
+# 🚪 LOGOUT
 @login_required
 def logout_view(request):
     logout(request)
@@ -112,13 +112,13 @@ def delete_employee(request, id):
         return HttpResponseForbidden()
 
     emp = get_object_or_404(Employee, id=id)
-    emp.delete()
+    emp.user.delete()
 
     messages.success(request, "Employee deleted successfully")
     return redirect('hr_dashboard')
 
 
-# ✏️ EDIT EMPLOYEE
+# ✏️ EDIT EMPLOYEE (🔥 FIXED VERSION)
 @login_required
 def edit_employee(request, id):
     if not request.user.is_hr:
@@ -127,12 +127,35 @@ def edit_employee(request, id):
     emp = get_object_or_404(Employee, id=id)
 
     if request.method == 'POST':
-        emp.department = request.POST.get('department')
-        emp.salary = request.POST.get('salary')
-        emp.joining_date = request.POST.get('joining_date')
-        emp.save()
+        username = request.POST.get('username')
+        department = request.POST.get('department')
+        salary = request.POST.get('salary')
+        joining_date = request.POST.get('joining_date')
 
-        messages.success(request, "Employee updated successfully")
+        # ✅ Username duplicate check
+        if User.objects.filter(username=username).exclude(id=emp.user.id).exists():
+            messages.error(request, "Username already exists")
+            return redirect('edit_employee', id=id)
+
+        try:
+            with transaction.atomic():
+                # 🔥 Update User (IMPORTANT)
+                user = emp.user
+                user.username = username
+                user.save()
+
+                # 🔥 Update Employee
+                emp.department = department
+                emp.salary = salary
+                emp.joining_date = joining_date
+                emp.save()
+
+            messages.success(request, "Employee updated successfully")
+
+        except Exception as e:
+            print("ERROR:", e)
+            messages.error(request, "Error updating employee")
+
         return redirect('hr_dashboard')
 
     return render(request, 'add_employee.html', {'employee': emp})
