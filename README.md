@@ -56,7 +56,7 @@ This project also includes an Android application built using WebView.
 ## Installation (Local Setup)
 
 ```bash
-git clone https://github.com/your-username/HR-Portal-Backend.git
+git clone https://github.com/demon1232/HR_Portal-Backend.git
 cd HR-Portal-Backend
 pip install -r requirements.txt
 python manage.py migrate
