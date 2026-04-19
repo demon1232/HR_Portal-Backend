@@ -1,0 +1,28 @@
+<h2 style="text-align:center;">Scan Card</h2>
+
+<form method="POST" style="text-align:center; margin-top:50px;">
+  {% csrf_token %}
+  <input type="text" name="rfid" autofocus style="padding:10px; width:300px;">
+</form>
+
+{% if messages %}
+  {% for message in messages %}
+    <div style="text-align:center; margin-top:30px; font-size:30px; color:green;">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if messages %}
+  {% for message in messages %}
+    <div style="text-align:center; margin-top:20px; font-size:22px;">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<script>
+document.querySelector("input").addEventListener("change", function() {
+    this.form.submit();
+});
+</script>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Salary</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+        }
+
+        .container-box {
+            padding: 30px;
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card-glass {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(18px);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            color: #00c6ff;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .filter-box {
+            margin-bottom: 15px;
+        }
+
+        .salary-highlight {
+            text-align: center;
+            padding: 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            box-shadow: 0 8px 20px rgba(0,198,255,0.3);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        td, th {
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .back-btn {
+            margin-top: 15px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-box">
+
+    <div class="card-glass">
+
+        <h2>My Salary Dashboard</h2>
+
+        <!-- FILTER -->
+        <form method="GET" class="row filter-box">
+
+            <div class="col-md-4">
+                <select name="month" class="form-control">
+                    <option value="">All Months</option>
+                    <option value="January" {% if request.GET.month == "January" %}selected{% endif %}>January</option>
+                    <option value="February" {% if request.GET.month == "February" %}selected{% endif %}>February</option>
+                    <option value="March" {% if request.GET.month == "March" %}selected{% endif %}>March</option>
+                    <option value="April" {% if request.GET.month == "April" %}selected{% endif %}>April</option>
+                    <option value="May" {% if request.GET.month == "May" %}selected{% endif %}>May</option>
+                    <option value="June" {% if request.GET.month == "June" %}selected{% endif %}>June</option>
+                    <option value="July" {% if request.GET.month == "July" %}selected{% endif %}>July</option>
+                    <option value="August" {% if request.GET.month == "August" %}selected{% endif %}>August</option>
+                    <option value="September" {% if request.GET.month == "September" %}selected{% endif %}>September</option>
+                    <option value="October" {% if request.GET.month == "October" %}selected{% endif %}>October</option>
+                    <option value="November" {% if request.GET.month == "November" %}selected{% endif %}>November</option>
+                    <option value="December" {% if request.GET.month == "December" %}selected{% endif %}>December</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <input type="number" name="year" value="{{ request.GET.year }}" placeholder="Enter Year" class="form-control">
+            </div>
+
+            <div class="col-md-4">
+                <button class="btn btn-primary w-100">Filter</button>
+            </div>
+
+        </form>
+
+        {% if records %}
+
+        <!-- LATEST SALARY -->
+        <div class="salary-highlight">
+            <p>Latest Salary</p>
+            <h1>Rs {{ records.0.total }}</h1>
+            <p>{{ records.0.month }} {{ records.0.year }}</p>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-responsive">
+            <table class="table table-dark table-hover">
+
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Year</th>
+                        <th>Salary</th>
+                        <th>Action</th> <!-- ✅ NEW COLUMN -->
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.month }}</td>
+                    <td>{{ r.year }}</td>
+                    <td><strong>Rs {{ r.total }}</strong></td>
+
+                    <!-- ✅ DOWNLOAD BUTTON -->
+                    <td>
+                        <a href="{% url 'download_payslip' r.id %}" class="btn btn-success btn-sm">
+                             Download
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+        {% else %}
+            <div class="no-data">
+                No salary records found 😕
+            </div>
+        {% endif %}
+
+        <a href="/employee/" class="btn btn-info back-btn">
+            ⬅ Back to Dashboard
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

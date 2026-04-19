@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4 p-4">
+        <h3 class="mb-4 fw-bold text-primary">Add Payslip</h3>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Employee</label>
+                    <select name="employee" class="form-select">
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}">{{ emp.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Month</label>
+                    <input type="number" name="month" class="form-control">
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Year</label>
+                    <input type="number" name="year" class="form-control">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Basic Salary</label>
+                    <input type="number" name="basic_salary" class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Bonus</label>
+                    <input type="number" name="bonus" class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Other Deductions</label>
+                    <input type="number" name="other_deductions" class="form-control">
+                </div>
+            </div>
+
+            <button class="btn btn-primary w-100 mt-3">Generate Payslip</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

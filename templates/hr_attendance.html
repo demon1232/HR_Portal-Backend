@@ -1,0 +1,47 @@
+{% extends 'hr_dashboard.html' %}
+
+{% block content %}
+
+<h2 class="mb-4">Attendance</h2>
+
+<!-- 🔥 HR MESSAGES (ADDED) -->
+{% if messages %}
+    {% for message in messages %}
+        {% if 'hr' in message.tags %}
+            <div class="alert alert-info">
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div class="card-box">
+
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <!-- Dummy data for now -->
+            <tr>
+                <td>Ali Khan</td>
+                <td>2026-04-11</td>
+                <td><span class="badge bg-success">Present</span></td>
+            </tr>
+
+            <tr>
+                <td>Ahmed Raza</td>
+                <td>2026-04-11</td>
+                <td><span class="badge bg-danger">Absent</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}

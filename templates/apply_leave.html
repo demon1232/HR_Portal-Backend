@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+  <div class="card shadow-lg p-4" style="max-width:600px; margin:auto; border-radius:15px;">
+
+<h3 class="text-center mb-4">Apply Leave</h3>
+
+<form method="POST">
+  {% csrf_token %}
+
+  <!-- Leave Type -->
+  <div class="mb-3">
+    <label class="form-label">Leave Type</label>
+    <select name="leave_type" id="leaveType" class="form-control" required onchange="toggleHoursField()">
+      <option value="">Select Leave Type</option>
+      <option>Casual</option>
+      <option>Sick</option>
+      <option>Earned</option>
+      <option value="hourly">Hourly</option>
+    </select>
+  </div>
+
+  <!-- Time Field (UPDATED) -->
+  <div id="hoursField" style="display:none; margin-top:10px;">
+    <div class="row">
+      <div class="col-md-6">
+        <label class="form-label">From Time</label>
+        <input type="time" name="from_time" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">To Time</label>
+        <input type="time" name="to_time" class="form-control">
+      </div>
+    </div>
+  </div>
+
+  <!-- Dates -->
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Start Date</label>
+      <input type="date" name="start_date" class="form-control" required>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label class="form-label">End Date</label>
+      <input type="date" name="end_date" class="form-control" required>
+    </div>
+  </div>
+
+  <!-- Reason -->
+  <div class="mb-3">
+    <label class="form-label">Reason</label>
+    <textarea name="reason" class="form-control" rows="3" placeholder="Write your reason..." required></textarea>
+  </div>
+
+  <!-- Button -->
+  <div class="text-center">
+    <button type="submit" class="btn btn-primary px-4">
+      Apply Leave
+    </button>
+  </div>
+
+</form>
+
+  </div>
+
+</div>
+
+<script>
+function toggleHoursField() {
+    var type = document.getElementById("leaveType").value;
+    var hoursField = document.getElementById("hoursField");
+
+    if (type === "hourly") {
+        hoursField.style.display = "block";
+    } else {
+        hoursField.style.display = "none";
+    }
+}
+</script>
+
+{% endblock %}

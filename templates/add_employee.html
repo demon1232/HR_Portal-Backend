@@ -38,12 +38,22 @@
             text-align: center;
             margin-bottom: 20px;
         }
+
+        .preview-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            margin: 10px auto;
+        }
     </style>
 </head>
 
 <body>
 
 <form method="POST" 
+      enctype="multipart/form-data"
       action="{% if employee %}{% url 'edit_employee' employee.id %}{% else %}{% url 'add_employee' %}{% endif %}" 
       class="form-box">
 
@@ -53,7 +63,7 @@
     {% if employee %}Edit Employee{% else %}Add Employee{% endif %}
 </h3>
 
-<!-- ✅ Username FIXED -->
+<!-- Username -->
 <input type="text" name="username" class="form-control mb-3"
        value="{% if employee %}{{ employee.user.username }}{% endif %}"
        placeholder="Username" required>
@@ -69,18 +79,37 @@
        placeholder="Salary" required>
 
 <!-- Joining Date -->
-<input type="date" name="joining_date" class="form-control mb-4"
+<input type="date" name="joining_date" class="form-control mb-3"
        value="{{ employee.joining_date|date:'Y-m-d' }}"
        required>
 
-<!-- Button -->
-<button class="btn btn-primary w-100">
+<!-- ✅ FIXED NAME -->
+<input type="file" name="profile_pic" class="form-control mb-2" onchange="previewImage(event)">
+
+<!-- ✅ FIXED FIELD -->
+{% if employee and employee.profile_pic %}
+    <img src="{{ employee.profile_pic.url }}" class="preview-img" id="preview">
+{% else %}
+    <img src="https://via.placeholder.com/80" class="preview-img" id="preview">
+{% endif %}
+
+<button class="btn btn-primary w-100 mt-3">
     {% if employee %}Update Employee{% else %}Add Employee{% endif %}
 </button>
 
 <a href="{% url 'hr_dashboard' %}" class="btn btn-light w-100 mt-2">Back</a>
 
 </form>
+
+<script>
+function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function(){
+        document.getElementById('preview').src = reader.result;
+    }
+    reader.readAsDataURL(event.target.files[0]);
+}
+</script>
 
 </body>
 </html>

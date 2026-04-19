@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4 p-4">
+        <h3 class="mb-4 fw-bold text-success">All Payslips</h3>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Employee</th>
+                        <th>Month</th>
+                        <th>Basic</th>
+                        <th>Bonus</th>
+                        <th>EOBI</th>
+                        <th>PF</th>
+                        <th>Total Deduction</th>
+                        <th>Net Salary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td>{{ r.employee.username }}</td>
+                        <td>{{ r.month }}/{{ r.year }}</td>
+                        <td>{{ r.basic_salary }}</td>
+                        <td>{{ r.bonus }}</td>
+                        <td>{{ r.eobi }}</td>
+                        <td>{{ r.pf }}</td>
+                        <td>{{ r.total_deductions }}</td>
+                        <td class="fw-bold text-success">{{ r.net_salary }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

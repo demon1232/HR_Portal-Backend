@@ -1,154 +1,459 @@
+{% load static %}
+
 <!DOCTYPE html>
+
 <html>
 <head>
-    <title>Employee Dashboard</title>
+    <title>WorkTrack HR System</title>
 
-    <!-- 🔥 Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- 🔥 Premium Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
 
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #141e30, #243b55);
-            color: white;
-        }
+<style>
+    body {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #141e30, #243b55);
+        color: white;
+        font-size: 14px;
+    }
 
-        /* 🔥 TOPBAR */
-        .topbar {
-            padding: 14px 30px;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .topbar {
+        padding: 12px 25px;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-        .topbar h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            color: #00c6ff;
-        }
+    .topbar h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #00c6ff;
+    }
 
-        .logout-btn {
-            background: #ff4d4d;
-            border: none;
-            font-size: 14px;
-            padding: 6px 14px;
-        }
+    .logout-btn {
+        background: #ff4d4d;
+        border: none;
+        font-size: 13px;
+        padding: 5px 12px;
+    }
 
-        /* 🔥 CONTENT */
-        .container-box {
-            padding: 40px;
-        }
+    .container-box {
+        padding: 25px;
+    }
 
-        /* 🔥 CARD STYLE */
-        .card-box {
-            background: rgba(255,255,255,0.08);
-            backdrop-filter: blur(15px);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 20px;
-            transition: 0.3s ease;
-        }
+    .card-box {
+        background: rgba(255,255,255,0.08);
+        backdrop-filter: blur(15px);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 15px;
+        transition: 0.3s ease;
+    }
 
-        .card-box:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+    .card-box:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
 
-        .title {
-            font-size: 14px;
-            opacity: 0.7;
-        }
+    .title {
+        font-size: 12px;
+        opacity: 0.7;
+    }
 
-        .value {
-            font-size: 20px;
-            font-weight: 600;
-        }
+    .value {
+        font-size: 16px;
+        font-weight: 600;
+    }
 
-        /* 🔥 PROFILE */
-        .profile {
-            text-align: center;
-        }
+    .profile {
+        text-align: center;
+    }
 
-        .profile img {
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            margin-bottom: 10px;
-        }
+    .profile img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 8px;
+        border: 3px solid #00c6ff;
+    }
 
-        .profile h5 {
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
+    .profile h5 {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
 
-        .profile p {
-            opacity: 0.7;
-            font-size: 14px;
-        }
+    .profile p {
+        opacity: 0.7;
+        font-size: 12px;
+    }
 
-    </style>
+    .action-btn {
+        margin-top: 10px;
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+
+    #calendar {
+        background: #1e293b;
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    .fc-toolbar-title {
+        color: white;
+        font-size: 16px;
+    }
+
+.fc {
+    max-width: 100%;
+}
+
+#calendar {
+    max-width: 100%;
+}
+</style>
+
 </head>
 
 <body>
 
-<!-- 🔥 HEADER -->
 <div class="topbar">
-    <h2>Employee Dashboard</h2>
+
+    <!-- LEFT SIDE (LOGO + TITLE) -->
+    <div style="display:flex; align-items:center; gap:10px;">
+        <img src="{% static 'images/logo.png' %}" style="height:40px;">
+        <h2 style="margin:0;">Employee Dashboard</h2>
+    </div>
+
+    <!-- RIGHT SIDE (LOGOUT BUTTON) -->
     <a href="{% url 'logout' %}" class="btn logout-btn">Logout</a>
+
 </div>
 
 <div class="container-box">
 
-    <div class="row">
 
-        <!-- 👤 PROFILE -->
-        <div class="col-md-4">
-            <div class="card-box profile">
+{% if messages %}
+    {% for message in messages %}
+        {% if 'employee' in message.tags %}
+            <div class="alert alert-info">
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- ❌ FIX: removed wrong leave.status block -->
+
+<div class="row">
+
+    <div class="col-md-4">
+        <div class="card-box profile">
+
+            {% if employee.profile_picture %}
+                <img src="{{ employee.profile_picture.url }}">
+            {% elif employee.profile_pic %}
+                <img src="{{ employee.profile_pic.url }}">
+            {% else %}
                 <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-                <h5>{{ employee.user.username }}</h5>
-                <p>{{ employee.department }}</p>
+            {% endif %}
+
+            <h5>{{ employee.user.username }}</h5>
+            <p>{{ employee.department }}</p>
+
+            <a href="{% url 'my_salary' %}" class="btn btn-info action-btn">
+                View My Salary
+            </a>
+
+            <h6 class="mt-3">Check In with Selfie</h6>
+            <video id="video" autoplay style="width:100%; border-radius:10px;"></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+
+            <button onclick="capture(event)" class="btn btn-success action-btn w-100 mt-2">
+                📸 Capture & Check In
+                </button>
+
+            <form method="POST" action="{% url 'mark_attendance' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="checkout">
+                <button class="btn btn-warning action-btn w-100">Check Out</button>
+            </form>
+
+            <a href="{% url 'apply_leave' %}" class="btn btn-info mt-2">
+                Apply Leave
+            </a>
+
+            {% if attendance %}
+                <p style="margin-top:8px; font-size:12px;">
+                    Check In: {{ attendance.check_in|default:"-" }} <br>
+                    Check Out: {{ attendance.check_out|default:"-" }} <br>
+                    Late: {{ attendance.late_minutes }} mins
+                </p>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="col-md-7">
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card-box">
+                    <div class="title">Current Salary</div>
+                    <div class="value">Rs {{ employee.salary }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card-box">
+                    <div class="title">Joining Date</div>
+                    <div class="value">{{ employee.joining_date }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="card-box">
+                    <div class="title">Department</div>
+                    <div class="value">{{ employee.department }}</div>
+                </div>
             </div>
         </div>
 
-        <!-- 📊 DETAILS -->
-        <div class="col-md-8">
-            <div class="row">
+        <!-- STATS -->
+        <div class="row mt-2">
 
-                <div class="col-md-6">
-                    <div class="card-box">
-                        <div class="title">Salary</div>
-                        <div class="value">Rs {{ employee.salary }}</div>
-                    </div>
+            <div class="col-md-3">
+                <div class="card-box text-center">
+                    <div class="title">Present</div>
+                    <div class="value text-success">{{ present_count }}</div>
                 </div>
-
-                <div class="col-md-6">
-                    <div class="card-box">
-                        <div class="title">Joining Date</div>
-                        <div class="value">{{ employee.joining_date }}</div>
-                    </div>
-                </div>
-
-                <div class="col-md-12">
-                    <div class="card-box">
-                        <div class="title">Department</div>
-                        <div class="value">{{ employee.department }}</div>
-                    </div>
-                </div>
-
             </div>
+
+            <div class="col-md-3">
+                <div class="card-box text-center">
+                    <div class="title">Late</div>
+                    <div class="value text-warning">{{ late_count }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card-box text-center">
+                    <div class="title">Absent</div>
+                    <div class="value text-danger">{{ absent_count }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card-box text-center">
+                    <div class="title">Late (This Month)</div>
+                    <div class="value text-info">{{ monthly_late }} min</div>
+                </div>
+            </div>
+
         </div>
 
+        <!-- LEAVES -->
+        <div class="row mt-3">
+
+            <div class="col-md-4">
+                <div class="card-box text-center">
+                    <h6>Casual Leaves</h6>
+                    <h4 style="color:#4CAF50;">{{ casual }}</h4>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card-box text-center">
+                    <h6>Sick Leaves</h6>
+                    <h4 style="color:#2196F3;">{{ sick }}</h4>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card-box text-center">
+                    <h6>Earned Leaves</h6>
+                    <h4 style="color:#FFC107;">{{ earned }}</h4>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MY LEAVES -->
+        <div class="card-box mt-3">
+            <h5>My Leaves</h5>
+
+            <table class="table table-dark mt-2">
+                <tr>
+                    <th>Type</th>
+                    <th>Status</th>
+                </tr>
+
+                {% for leave in my_leaves %}
+                <tr>
+                    <td>{{ leave.leave_type }}</td>
+                    <td>
+                        {% if leave.status == 'Approved' %}
+                            <span class="text-success">Approved</span>
+                        {% elif leave.status == 'Rejected' %}
+                            <span class="text-danger">Rejected</span>
+                        {% else %}
+                            <span class="text-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- CALENDAR -->
+        <!-- CALENDAR + SIDE BOX -->
+<div class="row mt-3">
+
+    <!-- LEFT: CALENDAR -->
+    <div class="col-md-8">
+        <div class="card-box">
+            <h5>Attendance Calendar</h5>
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <!-- RIGHT: SUMMARY -->
+    <div class="col-md-4">
+        <div class="card-box">
+            <h5>Quick Summary</h5>
+
+            <p>✔ Present Days: {{ present_count }}</p>
+            <p>⏰ Late Days: {{ late_count }}</p>
+            <p>❌ Absent Days: {{ absent_count }}</p>
+
+            <hr style="opacity:0.2;">
+
+            <p><strong>Monthly Late:</strong> {{ monthly_late }} mins</p>
+            <p><strong>Deduction:</strong> Rs {{ deduction }}</p>
+        </div>
     </div>
 
 </div>
+
+    </div>
+</div>
+
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 320,
+
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: ''
+        },
+
+        events: [
+            {% for r in records %}
+            {
+                title: "{{ r.status }}",
+                start: "{{ r.date|date:'Y-m-d' }}"
+            },
+            {% endfor %}
+        ]
+    });
+
+    calendar.render();   // 🔥 THIS WAS MISSING
+});
+</script>
+
+<div style="text-align:center; opacity:0.6; font-size:12px; margin-top:20px;">
+    Powered by Muhammad Nabeel Aziz
+</div>
+
+<script>
+function capture(event) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerText = "Opening Camera...";
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+
+    setTimeout(() => {
+
+        const canvas = document.getElementById('canvas');
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        const image = canvas.toDataURL('image/png');
+
+        stream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+
+        navigator.geolocation.getCurrentPosition(position => {
+
+                fetch('/checkin-with-proof/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        image: image,
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+
+                    if (data.status === "success") {
+                        alert("Check-in successful ✅");
+                        location.reload();
+                    } else {
+                        alert(data.message || "Error ❌");
+                        btn.disabled = false;
+                        btn.innerText = "📸 Capture & Check In";
+                    }
+
+                })
+                .catch(() => {
+                    alert("Server error ❌");
+                    btn.disabled = false;
+                    btn.innerText = "📸 Capture & Check In";
+                });
+
+            });
+
+        }, 1000);
+
+    })
+    .catch(err => {
+        alert("Camera access denied ❌");
+        console.log(err);
+        btn.disabled = false;
+        btn.innerText = "📸 Capture & Check In";
+    });
+}
+</script>
 
 </body>
 </html>

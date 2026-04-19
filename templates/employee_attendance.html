@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3 class="mb-4">{{ employee.full_name }} - Attendance History</h3>
+
+<div class="card shadow-lg p-3" style="border-radius:15px; background:rgba(255,255,255,0.05);">
+
+<table class="table table-dark table-hover align-middle text-center">
+
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Status</th>
+            <th>Location</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for att in records %}
+        <tr>
+
+            <td>{{ att.date }}</td>
+
+            <td>{{ att.check_in|time:"h:i A" }}</td>
+            <td>{{ att.check_out|time:"h:i A" }}</td>
+
+            <td>
+                {% if att.status == "Outside" %}
+                    <span class="badge bg-danger">Outside ❌</span>
+                {% else %}
+                    <span class="badge bg-success">Office ✅</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {% if att.map_link %}
+                    <a href="{{ att.map_link }}" target="_blank" class="btn btn-info btn-sm">
+                        📍 View
+                    </a>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+
+</div>
+{% endblock %}

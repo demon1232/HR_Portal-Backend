@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<h3 class="mb-4">All Employees</h3>
+
+<!-- 🔍 SEARCH BAR -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search employee...">
+    </div>
+</div>
+
+<!-- 👥 TABLE -->
+<div class="card shadow-lg p-3" style="border-radius:15px;">
+
+<table class="table table-dark table-hover align-middle" id="employeeTable">
+
+    <thead>
+        <tr>
+            <th>Profile</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Salary</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for emp in employees %}
+    <tr>
+
+        <td>
+            {% if emp.profile_pic %}
+                <img src="{{ emp.profile_pic.url }}" 
+                     style="width:40px; height:40px; border-radius:50%;">
+            {% else %}
+                <span>No Image</span>
+            {% endif %}
+        </td>
+
+        <td>{{ emp.user.username }}</td>
+        <td>{{ emp.department }}</td>
+        <td>Rs {{ emp.salary }}</td>
+
+        <td>
+    <a href="{% url 'edit_employee' emp.id %}" class="btn btn-warning btn-sm">Edit</a>
+
+    <a href="{% url 'delete_employee' emp.id %}" 
+       class="btn btn-danger btn-sm"
+       onclick="return confirm('Delete employee?')">Delete</a>
+
+    <a href="{% url 'add_salary' emp.id %}" class="btn btn-success btn-sm">Add</a>
+
+    <!-- 🔥 NEW BUTTON (IMPORTANT) -->
+    <a href="{% url 'employee_attendance' emp.id %}" class="btn btn-primary btn-sm">
+        Attendance
+    </a>
+
+    <!-- 🔥 ASSIGN CARD BUTTON -->
+    <a href="{% url 'assign_rfid' emp.id %}" class="btn btn-info btn-sm">
+        Assign Card
+    </a>
+
+    {% if emp.is_active %}
+    <form method="POST" action="{% url 'terminate_employee' emp.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button class="btn btn-dark btn-sm"
+            onclick="return confirm('Terminate this employee?')">
+            Terminate
+        </button>
+    </form>
+    {% else %}
+    <form method="POST" action="{% url 'reactivate_employee' emp.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button class="btn btn-success btn-sm">
+            Reactivate
+        </button>
+    </form>
+    {% endif %}
+</td>
+
+    </tr>
+    {% endfor %}
+    </tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- 🔥 SEARCH SCRIPT -->
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#employeeTable tbody tr");
+
+    rows.forEach(row => {
+        let text = row.innerText.toLowerCase();
+        row.style.display = text.includes(value) ? "" : "none";
+    });
+});
+</script>
+
+{% endblock %}
