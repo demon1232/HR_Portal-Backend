@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1f2937;
+            font-family: Arial, sans-serif;
+        }
+
+        h2 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        /* 🔥 STATS CARDS */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #2f3e55;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #cbd5e1;
+        }
+
+        .card p {
+            font-size: 22px;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        /* 🔥 TABLE */
+        .table-container {
+            background: #2f3e55;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: white;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            background: #3b4a61;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #3b4a61;
+        }
+
+        tr:hover {
+            background: #3b4a61;
+        }
+
+        .empty {
+            text-align: center;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>👥 Manager Dashboard</h2>
+
+    <!-- 🔥 STATS -->
+    <div class="stats-container">
+        <div class="card">
+            <h3>Total Team</h3>
+            <p>{{ total_team }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Late Minutes</h3>
+            <p>{{ total_late }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Leaves</h3>
+            <p>{{ total_leaves }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Present Today</h3>
+            <p>{{ present_today }}</p>
+        </div>
+    </div>
+
+    <!-- 🔥 TEAM TABLE -->
+    <div class="table-container">
+        <h2>My Team</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for member in team %}
+                <tr>
+                    <td>{{ member.full_name|default:member.user.username }}</td>
+                    <td>{{ member.department }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="empty">No team members</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

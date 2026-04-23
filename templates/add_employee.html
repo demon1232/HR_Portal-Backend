@@ -73,6 +73,15 @@
        value="{{ employee.department|default:'' }}"
        placeholder="Department" required>
 
+<!--Manager Assigned-->
+
+    <select name="manager" class="form-control mb-3">
+    <option value="">Select Manager (Optional)</option>
+    {% for emp in employees %}
+        <option value="{{ emp.id }}">{{ emp.user.username }}</option>
+    {% endfor %}
+</select>
+
 <!-- Salary -->
 <input type="number" name="salary" class="form-control mb-3"
        value="{{ employee.salary|default:'' }}"

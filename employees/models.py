@@ -1,27 +1,53 @@
 from django.db import models
 from django.conf import settings
+from datetime import time
 
 User = settings.AUTH_USER_MODEL
 
 
 class Employee(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
     full_name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=15)
+
     department = models.CharField(max_length=100)
-    role = models.CharField(max_length=100)
+
+    # 🔥 FIX: duplicate role remove + clean naming
+    role = models.CharField(max_length=50, default='Employee')
+
+    # ✅ NEW: designation (UI ke liye important)
+    designation = models.CharField(max_length=100, null=True, blank=True)
+
+    manager = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='team_members'
+    )
+
     salary = models.IntegerField()
     joining_date = models.DateField()
+
     profile_pic = models.ImageField(upload_to='profiles/', null=True, blank=True)
-    role = models.CharField(max_length=50, default='Employee')
-    casual_leaves = models.IntegerField(default=14)
-    sick_leaves = models.IntegerField(default=8)
-    earned_leaves = models.IntegerField(default=10)
+
+    casual_total = models.IntegerField(default=14)
+    casual_used = models.IntegerField(default=0)
+
+    sick_total = models.IntegerField(default=8)
+    sick_used = models.IntegerField(default=0)
+
+    earned_total = models.IntegerField(default=10)
+    earned_used = models.IntegerField(default=0)
+
     is_active = models.BooleanField(default=True)
+
     rfid = models.CharField(max_length=100, unique=True, null=True, blank=True)
     face_image = models.ImageField(upload_to='faces/', null=True, blank=True)
-
+    shift_start = models.TimeField(default=time(9, 0))
+    shift_end = models.TimeField(default=time(18, 0))
 
     def __str__(self):
         return self.full_name
@@ -42,10 +68,24 @@ class SalaryRecord(models.Model):
 class Attendance(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     
-    date = models.DateField(auto_now_add=True)
-    
+    date = models.DateField()
+
     check_in = models.TimeField(null=True, blank=True)
     check_out = models.TimeField(null=True, blank=True)
+
+    # 🔥 NEW
+    mode = models.CharField(
+        max_length=20,
+        choices=[
+            ('office', 'Office'),
+            ('remote', 'Remote'),
+        ],
+        default='office'
+    )
+
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    map_link = models.URLField(null=True, blank=True)
 
     SOURCE_CHOICES = [
         ('web', 'Web'),
@@ -62,21 +102,15 @@ class Attendance(models.Model):
             ('Present', 'Present'),
             ('Absent', 'Absent'),
             ('Late', 'Late'),
+            ('Remote', 'Remote'),
         ],
         default='Present'
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # 🔥 YEH ADD KARNA HAI
     updated_at = models.DateTimeField(auto_now=True)
 
     selfie = models.ImageField(upload_to='attendance_selfies/', null=True, blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
-    map_link = models.URLField(null=True, blank=True)
-
-
 
     class Meta:
         unique_together = ['employee', 'date']
@@ -109,3 +143,13 @@ class Leave(models.Model):
 
     def __str__(self):
         return f"{self.employee.user.username} - {self.leave_type}"
+
+class ShiftRoster(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    date = models.DateField()
+
+    shift_start = models.TimeField()
+    shift_end = models.TimeField()
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.date}"

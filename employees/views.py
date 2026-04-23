@@ -5,13 +5,13 @@ from django.http import HttpResponseForbidden
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Sum
-from datetime import datetime
+from datetime import date, time, datetime
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from django.http import HttpResponse
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from datetime import time
 from .models import Leave
 from django.views.decorators.csrf import csrf_exempt
@@ -22,7 +22,7 @@ from django.core.files.base import ContentFile
 import json
 from django.http import JsonResponse
 from geopy.distance import geodesic
-
+import face_recognition
 
 
 
@@ -79,6 +79,14 @@ def employee_dashboard(request):
 
     try:
         employee = Employee.objects.get(user=request.user)
+        if not employee.full_name:
+            employee.full_name = request.user.username
+
+        if not employee.designation:
+            employee.designation = employee.role if employee.role else "Employee"
+
+            employee.save()
+
     except Employee.DoesNotExist:
         return HttpResponseForbidden("You are not an employee")
 
@@ -120,22 +128,36 @@ def employee_dashboard(request):
         employee=employee
     ).order_by('-id')
 
+    subordinates = employee.team_members.all()
+
     return render(request, 'employee_dashboard.html', {
-        'employee': employee,
-        'attendance': attendance,
-        'records': records,
+    'employee': employee,
+    'subordinates': subordinates,  
 
-        'present_count': present_count,
-        'late_count': late_count,
-        'absent_count': absent_count,
-        'monthly_late': monthly_late,
-        'deduction': deduction,
+    'today_attendance': attendance,
+    'records': records,
 
-        'casual': employee.casual_leaves,
-        'sick': employee.sick_leaves,
-        'earned': employee.earned_leaves,
-        'my_leaves': my_leaves,
-    })
+    'present_count': present_count,
+    'late_count': late_count,
+    'absent_count': absent_count,
+    'monthly_late': monthly_late,
+    'deduction': deduction,
+
+    # 🔥 NEW LEAVE SYSTEM
+    'casual_total': employee.casual_total,
+    'casual_used': employee.casual_used,
+    'casual_available': employee.casual_total - employee.casual_used,
+
+    'sick_total': employee.sick_total,
+    'sick_used': employee.sick_used,
+    'sick_available': employee.sick_total - employee.sick_used,
+
+    'earned_total': employee.earned_total,
+    'earned_used': employee.earned_used,
+    'earned_available': employee.earned_total - employee.earned_used,
+
+    'my_leaves': my_leaves,
+})
 
 
 # LOGOUT
@@ -155,8 +177,8 @@ def add_employee(request):
         username = request.POST.get('username')
         department = request.POST.get('department')
         joining_date = request.POST.get('joining_date')
+        manager_id = request.POST.get('manager')   # ✅ NEW
 
-        # ✅ FIXED
         profile_pic = request.FILES.get('profile_pic')
 
         try:
@@ -182,12 +204,18 @@ def add_employee(request):
                 user.is_employee = True
                 user.save()
 
+                # ✅ Manager logic
+                manager = None
+                if manager_id:
+                    manager = Employee.objects.get(id=manager_id)
+
                 Employee.objects.create(
                     user=user,
                     department=department,
                     salary=salary,
                     joining_date=joining_date,
-                    profile_pic=profile_pic   # ✅ FIXED
+                    profile_pic=profile_pic,
+                    manager=manager   # ✅ NEW
                 )
 
             messages.success(request, "Employee added successfully")
@@ -198,7 +226,12 @@ def add_employee(request):
 
         return redirect('hr_dashboard')
 
-    return render(request, 'add_employee.html')
+    # ✅ employees send for dropdown
+    employees = Employee.objects.all()
+
+    return render(request, 'add_employee.html', {
+        'employees': employees
+    })
 
 
 # DELETE EMPLOYEE
@@ -501,42 +534,86 @@ def mark_attendance(request):
     emp = Employee.objects.get(user=request.user)
     today = date.today()
 
-    attendance, created = Attendance.objects.get_or_create(
-        employee=emp,
-        date=today
-    )
-
-    attendance.source = 'web'
-    
     action = request.POST.get('action')
-    office_time = time(9, 0)
+    mode = request.POST.get('mode', 'office')
+
+    office_time = emp.shift_start   # ✅ FIXED
 
     # ✅ CHECK-IN
     if action == 'checkin':
+
+        lat = request.POST.get('lat')
+        lng = request.POST.get('lng')
+
+        # 🔥 SAFE CONVERSION
+        if lat and lng:
+            lat = float(lat)
+            lng = float(lng)
+        else:
+            lat, lng = None, None
+
+        # ✅ LOCATION CHECK (ONLY FOR OFFICE)
+        if mode == 'office' and lat and lng:
+            office = (31.556833, 74.300250)
+            employee_loc = (lat, lng)
+
+            distance = geodesic(office, employee_loc).meters
+
+            if distance > 100:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "You are outside Office Location"
+                })
+
+        # ✅ GET ATTENDANCE
+        attendance, created = Attendance.objects.get_or_create(
+            employee=emp,
+            date=today
+        )
 
         if attendance.check_in:
             messages.warning(request, "Already checked in!", extra_tags='employee')
             return redirect('employee_dashboard')
 
-        now_time = datetime.now().time()
+        # ✅ LOCAL TIME FIX
+        now_time = timezone.localtime().time()
         attendance.check_in = now_time
+        attendance.source = 'web'
+        attendance.mode = mode   # ✅ SAVE MODE
 
-        # 🔥 LATE CALCULATION
-        if now_time > office_time:
-            late = datetime.combine(today, now_time) - datetime.combine(today, office_time)
-            attendance.late_minutes = int(late.total_seconds() / 60)
-            attendance.status = 'Late'
+        # 🔥 SHIFT BASED LATE LOGIC
+        now = timezone.localtime()
+        today = now.date()
+
+        shift_start_time = emp.shift_start
+        shift_end_time = emp.shift.end
+
+        is_overnight = shift_end_time <= shift_start_time
+
+        if is_overnight and now.time() < shift_start_time:
+            shift_start = datetime.combine(today - timedelta(days=1), shift_start_time)
         else:
-            attendance.status = 'Present'
+            shift_start = datetime.combine(today, shift_start_time)
 
-        attendance.save()
-        messages.success(request, "Check-in successful!", extra_tags='employee')
+        now_dt = datetime.combine(today, now.time())
 
+        if now_dt > shift_start:
+            late = now_dt - shift_start
+            attendance.late_minutes = int(late.total_seconds() / 60)
+            attendance.status = "Late"
+
+        else:
+            attendance.status = "Present"
 
     # ✅ CHECK-OUT
     elif action == 'checkout':
 
-        if not attendance.check_in:
+        attendance = Attendance.objects.filter(
+            employee=emp,
+            date=today
+        ).first()
+
+        if not attendance or not attendance.check_in:
             messages.warning(request, "Check-in first!", extra_tags='employee')
             return redirect('employee_dashboard')
 
@@ -544,13 +621,13 @@ def mark_attendance(request):
             messages.warning(request, "Already checked out!", extra_tags='employee')
             return redirect('employee_dashboard')
 
-        attendance.check_out = datetime.now().time()
+        attendance.check_out = timezone.localtime().time()   # ✅ FIXED
         attendance.save()
+
         messages.success(request, "Check-out successful!", extra_tags='employee')
 
     return redirect('employee_dashboard')
 
-    from django.db.models import Sum
 from datetime import datetime
 
 def get_monthly_late(employee):
@@ -640,7 +717,9 @@ def update_leave(request, id, action):
     employee = leave.employee
 
     if action == 'approve':
-        leave.status = 'Approved'
+
+        if leave.status != "Approved":
+            leave.status = 'Approved'
 
         # 🔥 HOURLY LEAVE
         if leave.leave_type == "Hourly":
@@ -682,13 +761,13 @@ def update_leave(request, id, action):
             total_days = (leave.end_date - leave.start_date).days + 1
 
             if leave.leave_type == "Casual":
-                employee.casual_leaves -= total_days
+                employee.casual_used += total_days
 
             elif leave.leave_type == "Sick":
-                employee.sick_leaves -= total_days
+                employee.sick_used += total_days
 
             elif leave.leave_type == "Earned":
-                employee.earned_leaves -= total_days
+                employee.earned_used += total_days
 
             employee.save()
 
@@ -703,8 +782,13 @@ def update_leave(request, id, action):
 def hr_dashboard(request):
     if not request.user.is_hr:
         return HttpResponseForbidden()
-    
-    mark_absent_for_today()
+
+    from django.utils import timezone
+    now = timezone.localtime()
+
+    # ✅ Absent sirf 12 baje ke baad lage
+    if now.hour >= 12:
+        mark_absent_for_today()
 
     employees = Employee.objects.all()
     total_salary = employees.aggregate(total=Sum('salary'))['total'] or 0
@@ -727,6 +811,7 @@ def hr_dashboard(request):
         'total_late': total_late,
         'total_leaves': total_leaves,
     })
+
 
 def all_employees(request):
     employees = Employee.objects.filter(is_active=True)
@@ -841,8 +926,6 @@ def rfid_api(request):
 
     attendance.source = "rfid"
 
-    office_time = time(9, 0)
-
     # 🔥 CHECK-IN
     if not attendance.check_in:
         attendance.check_in = current_time
@@ -885,10 +968,12 @@ def checkin_with_proof(request):
             image_data = data.get('image')
             lat = data.get('lat')
             lng = data.get('lng')
+            mode = data.get('mode')  # 🔥 NEW
 
-            print("LAT:", lat, "LNG:", lng)
+            # =========================
+            # ✅ VALIDATION
+            # =========================
 
-            # ✅ Location validation
             if lat is None or lng is None:
                 return JsonResponse({
                     "status": "error",
@@ -898,19 +983,20 @@ def checkin_with_proof(request):
             lat = float(lat)
             lng = float(lng)
 
-            # ✅ Image validation
             if not image_data:
                 return JsonResponse({
                     "status": "error",
                     "message": "No image received"
                 })
 
-            # ✅ Decode image
+            # =========================
+            # ✅ IMAGE DECODE
+            # =========================
+
             format, imgstr = image_data.split(';base64,')
             ext = format.split('/')[-1]
             file = ContentFile(base64.b64decode(imgstr), name=f'selfie.{ext}')
 
-            # ✅ Get employee
             employee = Employee.objects.get(user=request.user)
 
             attendance, created = Attendance.objects.get_or_create(
@@ -924,26 +1010,33 @@ def checkin_with_proof(request):
                     "message": "Already checked in"
                 })
 
-            # ✅ Save selfie
+            # =========================
+            # ✅ SAVE SELFIE
+            # =========================
+
             attendance.selfie = file
             attendance.save()
 
-            # ✅ Face verification
+            # =========================
+            # ✅ FACE VERIFY
+            # =========================
+
             if not employee.face_image:
                 attendance.selfie = None
                 attendance.save()
                 return JsonResponse({
-                    "status": "error",
+                    "status": "no_face",
                     "message": "No registered face found"
                 })
 
-            known_image = face_recognition.load_image_file(employee.face_image.path)
-            unknown_image = face_recognition.load_image_file(attendance.selfie.path)
+            known = face_recognition.load_image_file(employee.face_image.path)
+            unknown = face_recognition.load_image_file(attendance.selfie.path)
 
-            known_encodings = face_recognition.face_encodings(known_image)
-            unknown_encodings = face_recognition.face_encodings(unknown_image)
+            known_enc = face_recognition.face_encodings(known)
+            unknown_enc = face_recognition.face_encodings(unknown)
 
-            if not known_encodings or not unknown_encodings:
+            if not known_enc or not unknown_enc:
+                attendance.selfie.delete(save=False)
                 attendance.selfie = None
                 attendance.save()
                 return JsonResponse({
@@ -951,14 +1044,12 @@ def checkin_with_proof(request):
                     "message": "Face not detected ❌"
                 })
 
-            face_distance = face_recognition.face_distance(
-                [known_encodings[0]],
-                unknown_encodings[0]
+            distance = face_recognition.face_distance(
+                [known_enc[0]], unknown_enc[0]
             )[0]
 
-            print("Face Distance:", face_distance)
-
-            if face_distance > 0.5:
+            if distance > 0.6:
+                attendance.selfie.delete(save=False)
                 attendance.selfie = None
                 attendance.save()
                 return JsonResponse({
@@ -966,25 +1057,50 @@ def checkin_with_proof(request):
                     "message": "Face not matched ❌"
                 })
 
-            # ✅ Save attendance
-            attendance.latitude = lat
-            attendance.longitude = lng
-            attendance.check_in = timezone.now().time()
-            attendance.source = 'web'
+            # =========================
+            # 🔥 LOCATION LOGIC
+            # =========================
 
-            # ✅ 🔥 ADD THIS (MAP LINK)
-            attendance.map_link = f"https://www.google.com/maps?q={lat},{lng}"
-
-            # ✅ Office detection
             office = (31.556833, 74.300250)
             employee_loc = (lat, lng)
 
             geo_distance = geodesic(office, employee_loc).meters
 
-            if geo_distance <= 100:
-                attendance.status = "Office"
+            # =========================
+            # 🔥 MODE LOGIC
+            # =========================
+
+            if mode == "remote":
+                attendance.status = "Present"
+
+            elif mode == "office":
+                if geo_distance > 100:
+                    attendance.selfie.delete(save=False)
+                    attendance.selfie = None
+                    attendance.save()
+
+                    return JsonResponse({
+                        "status": "error",
+                        "message": "You are outside Office Location"
+                    })
+
+                attendance.status = "Present"
+
             else:
-                attendance.status = "Outside"
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Invalid mode"
+                })
+
+            # =========================
+            # ✅ FINAL SAVE
+            # =========================
+
+            attendance.latitude = lat
+            attendance.longitude = lng
+            attendance.map_link = f"https://www.google.com/maps?q={lat},{lng}"
+            attendance.check_in = timezone.now().time()
+            attendance.source = 'web'
 
             attendance.save()
 
@@ -1012,4 +1128,67 @@ def employee_attendance(request, id):
     return render(request, 'employee_attendance.html', {
         'employee': employee,
         'records': records
+    })
+
+@login_required
+def save_face(request):
+    if request.method == "POST":
+
+        data = json.loads(request.body)
+        image_data = data.get('image')
+
+        if not image_data:
+            return JsonResponse({"status": "error", "message": "No image received"})
+
+        format, imgstr = image_data.split(';base64,')
+        ext = format.split('/')[-1]
+
+        file = ContentFile(base64.b64decode(imgstr), name='face.' + ext)
+
+        employee = Employee.objects.get(user=request.user)
+
+        # 🔥 overwrite old face
+        if employee.face_image:
+            employee.face_image.delete(save=False)
+
+        employee.face_image = file
+        employee.save()
+
+        print("FACE SAVED")
+
+        return JsonResponse({"status": "success"})
+    
+@login_required
+def manager_dashboard(request):
+    try:
+        manager = Employee.objects.get(user=request.user)
+    except Employee.DoesNotExist:
+        return redirect('employee_dashboard')
+
+    team = Employee.objects.filter(manager=manager)
+
+    total_team = team.count()
+
+    total_late = Attendance.objects.filter(
+        employee__manager=manager
+    ).aggregate(total=Sum('late_minutes'))['total'] or 0
+
+    total_leaves = Leave.objects.filter(
+        employee__manager=manager
+    ).count()
+
+    today = timezone.localdate()
+
+    present_today = Attendance.objects.filter(
+        employee__manager=manager,
+        date=today,
+        status='Present'
+    ).count()
+
+    return render(request, 'manager_dashboard.html', {
+        'team': team,
+        'total_team': total_team,
+        'total_late': total_late,
+        'total_leaves': total_leaves,
+        'present_today': present_today,
     })
