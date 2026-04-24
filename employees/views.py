@@ -23,6 +23,7 @@ import json
 from django.http import JsonResponse
 from geopy.distance import geodesic
 import face_recognition
+import openpyxl
 
 
 
@@ -1192,3 +1193,74 @@ def manager_dashboard(request):
         'total_leaves': total_leaves,
         'present_today': present_today,
     })
+
+@login_required
+def export_payroll(request):
+    if not request.user.is_hr:
+        return HttpResponse("Unauthorized", status=403)
+
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+    
+    if not month or not year:
+        return HttpResponse("Month and Year required")
+    
+    if not year:
+        year = timezone.now().year
+    
+    month = int(month)
+    year = int(year)
+
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Payroll"
+
+    # 🔥 Header row
+    ws.append([
+        "Name",
+        "Department",
+        "Base Salary",
+        "Late Minutes",
+        "Deduction",
+        "Final Salary"
+    ])
+
+    employees = Employee.objects.all()
+
+    for emp in employees:
+
+        # 🔥 Attendance filter
+        records = Attendance.objects.filter(
+            employee=emp,
+            date__month=month,
+            date__year=year
+        )
+
+        # 🔥 Total late minutes
+        total_late = records.aggregate(
+            total=Sum('late_minutes')
+        )['total'] or 0
+
+        # 🔥 Deduction logic
+        deduction = total_late * 2   # Rs 2 per minute
+
+        # 🔥 Final salary
+        final_salary = max(emp.salary - deduction, 0)
+
+        ws.append([
+            emp.full_name or emp.user.username,
+            emp.department,
+            emp.salary,
+            total_late,
+            deduction,
+            final_salary
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response['Content-Disposition'] = f'attachment; filename=payroll_{month}_{year}.xlsx'
+
+    wb.save(response)
+    return response

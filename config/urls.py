@@ -35,7 +35,8 @@ urlpatterns = [
     path('assign-rfid/<int:emp_id>/', views.assign_rfid, name='assign_rfid'),
     path('checkin-with-proof/', views.checkin_with_proof),
     path('employee-attendance/<int:id>/', views.employee_attendance, name='employee_attendance'),
-    path('manager/', views.manager_dashboard, name='manager_dashboard')
+    path('manager/', views.manager_dashboard, name='manager_dashboard'),
+    path('export-payroll/', views.export_payroll, name='export_payroll')
 ]
 
 if settings.DEBUG:

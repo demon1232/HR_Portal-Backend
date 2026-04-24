@@ -71,6 +71,12 @@
             <option value="December">December</option>
         </select>
 
+        <!-- 🔥 YEAR (YAHAN ADD KARA) -->
+    <input type="number" name="year" class="form-control"
+           placeholder="Year (2026)"
+           value="{{ request.GET.year }}"
+           style="max-width: 150px;">
+
         <div class="ms-auto">
             <button type="submit" class="btn btn-primary px-4 shadow">
                 Filter
@@ -78,6 +84,19 @@
         </div>
 
     </form>
+
+<!--Excel Form-->
+
+<form method="GET" action="{% url 'export_payroll' %}" class="mb-4">
+
+    <input type="hidden" name="month" value="{{ request.GET.month }}">
+    <input type="hidden" name="year" value="{{ request.GET.year }}">
+
+    <button class="btn btn-success shadow">
+        📊 Export Payroll (Excel)
+    </button>
+
+</form>
 
     <!-- TABLE -->
     <div class="card-box">
