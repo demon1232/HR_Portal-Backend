@@ -2,10 +2,62 @@
 
 {% block content %}
 
-<h2>Leaves Page</h2>
+<h2 class="mb-4">Leaves</h2>
+
+<!-- 🔍 SEARCH -->
+<form method="GET" class="row mb-3">
+
+    <div class="col-md-4">
+        <input type="text" name="name" class="form-control" placeholder="Search Employee" value="{{ request.GET.name }}">
+    </div>
+
+    <div class="col-md-2">
+        <button class="btn btn-info w-100">Search</button>
+    </div>
+
+</form>
 
 <div class="card-box">
-    <p>Yahan leaves ka data show hoga</p>
+
+    <table class="table table-dark table-striped text-center align-middle">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for l in leaves %}
+            <tr>
+                <td>{{ l.employee.full_name }}</td>
+                <td>{{ l.leave_type }}</td>
+                <td>{{ l.start_date }}</td>
+                <td>{{ l.end_date }}</td>
+
+                <td>
+                    {% if l.status == "Approved" %}
+                        <span class="badge bg-success">Approved</span>
+                    {% elif l.status == "Rejected" %}
+                        <span class="badge bg-danger">Rejected</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No leaves found</td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+    </table>
+
 </div>
 
 {% endblock %}

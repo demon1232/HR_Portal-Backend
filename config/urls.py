@@ -36,7 +36,8 @@ urlpatterns = [
     path('checkin-with-proof/', views.checkin_with_proof),
     path('employee-attendance/<int:id>/', views.employee_attendance, name='employee_attendance'),
     path('manager/', views.manager_dashboard, name='manager_dashboard'),
-    path('export-payroll/', views.export_payroll, name='export_payroll')
+    path('export-payroll/', views.export_payroll, name='export_payroll'),
+    path('export-attendance/', views.export_attendance, name='export_attendance')
 ]
 
 if settings.DEBUG:

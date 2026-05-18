@@ -521,12 +521,40 @@ def approve_leave(request, id):
 
 @login_required
 def attendance(request):
-    return render(request, 'hr_attendance.html')
+    records = Attendance.objects.select_related('employee').all().order_by('-date')
+
+    # 🔍 SEARCH
+    name = request.GET.get('name')
+    if name:
+        records = records.filter(employee__full_name__icontains=name)
+
+    # 📅 DATE FILTER
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if start_date and end_date:
+        records = records.filter(date__range=[start_date, end_date])
+
+    return render(request, 'hr_attendance.html', {
+        'records': records
+    })
 
 
 @login_required
 def leaves(request):
-    return render(request, 'hr_leaves.html')
+    if not request.user.is_hr:
+        return HttpResponseForbidden()
+
+    leaves = Leave.objects.select_related('employee').all().order_by('-id')
+
+    # 🔍 FILTER
+    name = request.GET.get('name')
+    if name:
+        leaves = leaves.filter(employee__full_name__icontains=name)
+
+    return render(request, 'hr_leaves.html', {
+        'leaves': leaves
+    })
 
     
 
@@ -1261,6 +1289,48 @@ def export_payroll(request):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     response['Content-Disposition'] = f'attachment; filename=payroll_{month}_{year}.xlsx'
+
+    wb.save(response)
+    return response
+
+@login_required
+def export_attendance(request):
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Attendance"
+
+    # 🔹 Header
+    ws.append(["Employee", "Date", "Check In", "Check Out", "Status"])
+
+    # 🔹 Same filters apply karo (IMPORTANT)
+    records = Attendance.objects.select_related('employee').all()
+
+    name = request.GET.get('name')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if name:
+        records = records.filter(employee__full_name__icontains=name)
+
+    if start_date and end_date:
+        records = records.filter(date__range=[start_date, end_date])
+
+    # 🔹 Data fill
+    for att in records:
+        ws.append([
+            att.employee.full_name,
+            str(att.date),
+            str(att.check_in or "-"),
+            str(att.check_out or "-"),
+            att.status
+        ])
+
+    # 🔹 Response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response['Content-Disposition'] = 'attachment; filename=attendance.xlsx'
 
     wb.save(response)
     return response
